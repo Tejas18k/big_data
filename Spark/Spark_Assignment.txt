@@ -1,0 +1,128 @@
+1) question
+
+from pyspark.sql import SparkSession
+
+from pyspark.sql.functions import *
+from pyspark.sql.window import Window
+spark=SparkSession.builder.appName("Testing").getOrCreate()
+df=spark.read.format("CSV").option("header","true").option("delimiter",",").option("inferschema","true").load("E:\Bigdata\JK.csv")
+
+df.show()
+
+result = df.withColumn("lead", lead("director_id").over(Window.orderBy("TIMESTAMP"))).withColumn("lag", lag("director_id").over(Window.orderBy("TIMESTAMP"))).filter((col("DIRECTOR_ID") == col("lead")) & (col("DIRECTOR_ID") == col("lag")) & (col("lead") == col("lag")))
+
+# Show the result
+result.show()
+
+
+-------------------------------------------------------------
+3)
+from pyspark.sql import SparkSession
+spark=SparkSession.builder.appName("Testing").getOrCreate()
+
+df_person=spark.read.format("CSV").option("header","true").option("delimiter","|").option("inferschema","true").load("D:/Persons.csv")
+#df_person.show()
+df_Address=spark.read.format("CSV").option("header","true").option("delimiter","|").option("inferschema","true").load("D:/Addresses.csv")#.show()
+
+
+df_person.createOrReplaceTempView("persons")
+df_Address.createOrReplaceTempView("addresses")
+
+
+
+dfjoin = spark.sql("""
+    SELECT p.PERSONID as person_id, p.LASTNAME, p.FIRSTNAME, a.ADDRESSID, a.CITY, a.STATE
+    FROM persons p
+    LEFT JOIN addresses a
+    ON p.PERSONID = a.PERSONID
+    ORDER BY ADDRESSID DESC
+""")
+dfjoin.show()
+
++---------+--------+---------+---------+-------------+-------+
+|person_id|LASTNAME|FIRSTNAME|ADDRESSID|         CITY|  STATE|
++---------+--------+---------+---------+-------------+-------+
+|        2|   Alice|      Bob|        1|New York City|Newyork|
+|        1|    Wang|    Allen|     null|         null|   null|
++---------+--------+---------+---------+-------------+-------+
+
+
+
+--------------------------------------------------------------------------
+
+4)Write a PySpark program to find employees
+earning more than their managers. 
+
+from pyspark.sql import SparkSession
+spark=SparkSession.builder.appName("Testing").getOrCreate()
+
+df_empmgr=spark.read.format("csv").option("header","true").option("delimiter","|").option("inferschema","true").load("D:/EMPMGR.txt").show()
+
+df_empmgr.show()
+
++---+-----+------+---------+
+| ID| NAME|SALARY|MANAGERID|
++---+-----+------+---------+
+|  1|  JOE| 70000|        3|
+|  2|HENRY| 80000|        4|
+|  3|  SAM| 60000|     null|
+|  4|  MAX| 90000|     null|
++---+-----+------+---------+
+
+from pyspark.sql import SparkSession
+
+
+
+# Read the CSV file
+df_empmgr = spark.read.format("csv") \
+                      .option("header", "true") \
+                      .option("delimiter", "|") \
+                      .option("inferschema", "true") \
+                      .load("D:/EMPMGR.txt")
+
+# Show the DataFrame
+df_empmgr.show()
+
+# Register the DataFrame as a temporary view
+df_empmgr.createOrReplaceTempView("EMPMGRR")
+
+# Perform SQL join
+df_em = spark.sql("""
+    SELECT e.name
+    FROM EMPMGRR e
+    JOIN EMPMGRR m
+    ON e.MANAGERID = m.ID
+    WHERE e.SALARY>=m.SALARY
+""")
+
+# Show the joined DataFrame
+df_em.show()
+
+by DF API
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col
+
+# Create a Spark session
+spark = SparkSession.builder.appName("EmpMgr").getOrCreate()
+df=spark.read.format("csv").option("header","true").option("delimiter","|").option("inferschema","true").load("D:/EMPMGR.txt")
+
+# Load your EMPMGR DataFrame (assuming it's already created as 'df')
+# Self-join to find employees earning more than their managers
+result_df = df.alias('emp')\
+    .join(df.alias('mgr'), col('emp.MANAGERID') == col('mgr.ID'))\
+    .where(col('emp.SALARY') > col('mgr.SALARY'))\
+    .select(col('emp.NAME').alias('EMPLOYEE'), col('emp.SALARY').alias('EMPLOYEE_SALARY'),
+            col('mgr.NAME').alias('MANAGER'), col('mgr.SALARY').alias('MANAGER_SALARY'))
+
+# Show the result
+result_df.show()
+
+
++--------+---------------+-------+--------------+
+|EMPLOYEE|EMPLOYEE_SALARY|MANAGER|MANAGER_SALARY|
++--------+---------------+-------+--------------+
+|     JOE|          70000|    SAM|         60000|
++--------+---------------+-------+--------------+
+
+
+--------------------------------------------------------------
