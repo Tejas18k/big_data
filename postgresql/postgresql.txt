@@ -1,0 +1,27 @@
+how to open terminal for postgre sql  and perform query operation by using cmd
+
+#steps to connect database with cmd
+
+Access PostgreSQL:
+
+Before you can run PostgreSQL commands, you need to navigate to the PostgreSQL bin directory, or ensure that your system's PATH variable includes the PostgreSQL bin directory.
+enter cmd--> 
+
+1>
+C:\Users\HP>cd "C:\Program Files\PostgreSQL\17\bin"
+
+2>
+connect to the Database:
+
+Use the psql command to connect to your database. You'll need to provide your PostgreSQL username and the name of the database.
+
+bash
+psql -U your_username -d your_database
+
+psql -U postgres -d Demob16
+
+C:\Program Files\PostgreSQL\17\bin>psql -U postgres -d Demob16
+
+3>Password for user postgres: Tejas@123
+
+4> connetction done 
