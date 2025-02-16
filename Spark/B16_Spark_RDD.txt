@@ -1,0 +1,306 @@
+#Spark - B16 Offline
+---------------------------------------------
+Spark Core - 
+RDD : 
+
+1.Repartition and Coalesce():
+
+RDD --> Partitions 
+Impacting 
+
+no of core : x 
+max no of partitions : 2x 
+min processing should take more than 100ms 
+
+#Repartition()
+increase or decrease number of partitions
+new partitions always created 
+and partitions will try to get equal size
+use when dataset is small
+
+
+
+rdd.repartition(n)
+
+n:number of partitions which will get create
+
+rdd.getNumPartitions()
+2
+rdd1=rdd.repartition(4)
+rdd1.getNumPartitions()
+4
+
+rdd2=rdd1.repartition(2)
+rdd2.getNumPartitions()
+
+
+
+em- 
+>>> rdd=spark.sparkContext.parallelize([10,20,30,40])
+
+>>> rdd.getNumPartitions()
+16
+>>> rdd1=rdd.repartition(4)
+>>> rdd1.getNumPartitions()
+4
+>>> rdd2=rdd1.repartition(8)
+>>> rdd2.getNumPartitions()
+8
+
+#Coalesce():
+decrease number of partitions
+it merge data in existing partitions
+so there will be less suffle 
+prefer data size is large
+
+>>> rdd.collect()
+[10, 20, 30, 40]
+>>> rdd.getNumPartitions()
+16
+>>> rdd1=rdd.coalesce(2)
+>>> rdd1.getNumPartitions()
+2
+
+>>> rdd2=rdd1.coalesce(4)
+>>> rdd2.getNumPartitions()
+2
+
+=============================================
+diff. Repartition and Coalesce.
+
+==================================================
+#Persist and Cache()
+
+#cache()
+rdd.cache()
+
+hold data in memory (RAM)
+fault tolerant 
+
+
+#persist()
+rdd.persist(StorageLevel.MEMORY_ONLY)
+rdd.persist(StorageLevel.MEMORY_AND_DISC)
+rdd.persist(StorageLevel.MEMORY_AND_DISC_2)
+rdd.persist(StorageLevel.DISK_ONLY)
+rdd.persist(StorageLevel.DISK_ONLY_SER)
+rdd.persist(StorageLevel.DISK_ONLY_2)
+
+rdd=spark.sparkContext.parallelize([10,20,30,40])
+
+rdd1=rdd.map(lambda x:x*10)
+
+rdd1.cache()
+
+rdd2=rdd1.map(lambda x:x/2)
+
+from pyspark import StorageLevel
+rdd2.persist(StorageLevel.DISK_ONLY)
+
+rdd2.collect()
+
+rdd.unpersist()
+rdd.clear()
+
+====================================
+diff . persist and cache() *****
+========================================
+#Local - CLI 
+rdd=spark.sparkContext.parallelize([10,20,30,40])
+rdd1=rdd.map(lambda x:x*10)
+rdd2=rdd1.map(lambda x:x/2)
+rdd2.collect()
+
+#Local - Pycharm 
+from pyspark.sql import SparkSession
+
+spark=SparkSession.builder.appName("sample").getOrCreate()
+
+rdd=spark.sparkContext.parallelize([10,20,30,40])
+rdd1=rdd.map(lambda x:x*10)
+rdd2=rdd1.map(lambda x:x/2)
+rdd2.collect()
+
+spark.stop()
+
+==================================
+EMR - hadoop + spark 
+
+CLuster : CLI (Testing)
+rdd=spark.sparkContext.parallelize([10,20,30,40])
+rdd1=rdd.map(lambda x:x*10)
+rdd2=rdd1.map(lambda x:x/2)
+rdd2.collect()
+
+
+
+Cluster : Batch (Production)
+
+from pyspark.sql import SparkSession
+
+spark=SparkSession.builder.appName("sample").getOrCreate()
+
+rdd=spark.sparkContext.parallelize([10,20,30,40])
+rdd1=rdd.map(lambda x:x*10)
+rdd2=rdd1.map(lambda x:x/2)
+print(rdd2.collect())
+
+spark.stop()
+
+#run spark-submit app.py
+
+================================================
+Run Spark job on EMR cluster : 
+spark-submit app.py 
+
+emp.txt
+did,eid,ename
+10,1,Karan
+20,2,Rajesh
+20,3,Rakesh
+
+
+dept.txt
+did,dname
+10,IT
+20,RD
+30,DM
+
+create above 2 files and upload on HDFS 
+
+[hadoop@ip-172-31-9-88 ~]$ hadoop fs -put *.txt /
+[hadoop@ip-172-31-9-88 ~]$ hadoop fs -ls /
+Found 5 items
+-rw-r--r--   1 hadoop hdfsadmingroup         28 2025-02-08 04:45 /dept.txt
+-rw-r--r--   1 hadoop hdfsadmingroup         49 2025-02-08 04:45 /emp.txt
+drwxrwxrwt   - hdfs   hdfsadmingroup          0 2025-02-08 04:27 /tmp
+drwxr-xr-x   - hdfs   hdfsadmingroup          0 2025-02-08 04:27 /user
+drwxr-xr-x   - hdfs   hdfsadmingroup          0 2025-02-08 04:27 /var
+
+from pyspark.sql import SparkSession
+
+spark=SparkSession.builder.appName("sample").getOrCreate()
+
+
+rdd_e=spark.sparkContext.textFile("/emp.txt")
+rdd_d=spark.sparkContext.textFile("/dept.txt")
+
+e_header=rdd_e.first()
+d_header=rdd_d.first()
+
+rdd_e1=rdd_e.filter(lambda x:x!=e_header)
+rdd_d1=rdd_d.filter(lambda x:x!=d_header)
+
+rdd_e2=rdd_e1.map(lambda x:x.split(","))
+rdd_e3=rdd_e2.map(lambda x:(x[0],x[1],x[2]))
+
+rdd_d2=rdd_d1.map(lambda x:x.split(","))
+rdd_d3=rdd_d2.map(lambda x:(x[0],x[1]))
+
+rdd=rdd_e3.join(rdd_d3)
+
+print(rdd.collect())
+
+==============================
+#HDFS and S3 
+
+data.txt 
+java
+scala
+python
+cpp
+
+output
+java programming
+scala programming
+python programming
+cpp programming
+
+
+from pyspark.sql import SparkSession
+spark=SparkSession.builder.appName("HDFS data processing").getOrCreate()
+
+#read data from HDFS 
+rdd=spark.sparkContext.textFile("/data.txt")
+
+#process
+rdd1=rdd.map(lambda x:x+" programming")
+
+print(rdd1.collect())
+#write into s3 
+rdd1.saveAsTextFile("s3://anildata/sparkop1")
+
+spark.stop()
+
+===============================================
+#Spark Job flow 
+
+
+spark-submit --> Spark Session launch--> driver --> DAG + Linage Graph --> Dag Schedular (Stages)--> Task Schedular (stages into Task) --> Executor (Apply Logic + Data)
+
+
+driver
+executer 
+
+
+
+
+#Lanage Grapah
+#DAG
+#DAG Schedular
+#Task
+#Stages
+#Job
+#application
+
+app , job , stages , task *****
+
+=================================================================
+#Deployment Mode :*****
+decided on basis where our spark driver program run 
+ 
+1.client
+driver propgram run on same machine from where client submitted spark job.
+adv - driver resources will get utilized from client machine 
+dis - there is more chances of failure 
+
+2.cluster 
+driver program running any machine from cluster 
+adv - less chances of job failure 
+disadv - occupy resources from cluster 
+
+Prod - we prefer cluster
+
+
+
+Paired RDD 
+===========================
+
+spark-submit --master local/yarn --deploy-mode client/cluster app.py
+
+
+=======================================
+Paired RDD  : 
+RDD haveing key value pair data 
+
+
+data.txt
+java
+java
+java
+scala
+scala
+python
+r
+cpp
+
+
+rdd=spark.sparkContext.textFile("D:/data1.txt")
+
+rdd1=rdd.map(lambda x:(x,1))
+
+rdd2=rdd1.reduceByKey(lambda x,y:x+y)
+
+rdd2.collect()
+
+=====================================================================

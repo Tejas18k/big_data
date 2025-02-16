@@ -1,0 +1,122 @@
+#OOPS
+
+1.Polymorphism - 
+
+1.method overload : not supported in python 
+
+class Car:
+	def rotate(self):
+		print("Wheel Rotate")
+	
+	def rotate(self,ac_button)
+	
+
+class math:
+	def sum(a,b):
+		print(a+b)
+
+	def sum(a,b,c):
+		print(a+b+c)
+
+m=math()
+m.sum(10,20)
+m.sum(10,20,30)
+
+2.Method Override - 
+
+class car:
+	def colour(self):
+		print("this is colour method from car class")
+
+class tata(car):
+	def __init__(self):
+		colour().super()
+	def colour(self):
+		print("this is colour method from tata class")
+
+
+t=tata()
+
+t.colour()
+
+======================================
+#Abstraction : 
+
+from abc import ABC,abstractMethod
+
+class std(ABC):
+	@abstractMethod
+	def notice(self):
+		pass
+	
+	def display(self):
+		print("this is display method")
+		
+===========================================
+#Python - 
+Version 2.7/3.7
+
+diff Set Tuple List Dict 
+
+What is Exception handling 
+
+except finally else 
+
+OOP's Concept
+Class,Object,COnstructor 
+4 Pillers of OOPS  - Encapsulation,Inhertitance , Polymorphism ,Abstraction
+
+Scenarios - 
+-------------------------------------------------------
+Pyspark Folder 
+-pycharm  x
+-hadoop
+-python x
+-spark 
+-jdk.1.8.191
+-------------------------------------------------------
+#Pyspark Installation
+
+Steps - 
+1.create a folder in c/d/e drive name with bigdata
+2.in bigdata folder create folder name with sw
+3.in sw create java folder
+4.in java create jdk , jre 
+
+#Java installation
+double click on setup -> if getting popup click yes --> next --> change new jdk path --> install -->  ok  --> change jre path --> next --> install --> close
+
+#Hadoop and Spark Installation 
+download hadoop and spark from drive --> keep in sw folder --> extract both hadoop and spark zip file -->
+
+*****system env variables need to set 
+#HOME
+C:\bigdata\sw\java\jdk
+C:\bigdata\sw\hadoop-2.7.2\hadoop-2.7.2
+C:\bigdata\sw\spark-2.4.6-bin-hadoop2.7\spark-2.4.6-bin-hadoop2.7
+
+search env --> select system env --> env variables --> in system variable --> New --> 
+JAVA_HOME
+HADOOP_HOME
+SPARK_HOME
+
+#path
+C:\bigdata\sw\java\jdk\bin
+C:\bigdata\sw\hadoop-2.7.2\hadoop-2.7.2\bin
+C:\bigdata\sw\hadoop-2.7.2\hadoop-2.7.2\sbin
+C:\bigdata\sw\spark-2.4.6-bin-hadoop2.7\spark-2.4.6-bin-hadoop2.7\bin
+C:\bigdata\sw\spark-2.4.6-bin-hadoop2.7\spark-2.4.6-bin-hadoop2.7\sbin
+
+search env --> select system env --> env variables --> in system variable --> double click path variable and add all paths
+
+=========================================================
+test : 
+
+
+from pyspark.sql import SparkSession
+
+spark=SparkSession.builder.appName("Sample").getOrCreate()
+
+rdd=spark.sparkContext.parallelize([10,20,30])
+
+print(rdd.collect())

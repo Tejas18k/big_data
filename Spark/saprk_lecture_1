@@ -1,0 +1,238 @@
+#Spark Ecosystem 
+
+Spark COre - 
+Spark SQL -
+Spark Streaming 
+-
+Spark Graphx
+Spark ML 
+
+==========================
+Spark Core -
+Unstructured Data : 
+
+this is java
+java is prog lang
+java is easy
+
+this,1
+is,3
+java,3
+prog 1
+lang 1
+easy 1
+
+
+standalone
+cluster
+
+#Spark - Core 
+
+RDD : Resilient Distributed dataset 
+Object of Spark Core.
+basic storage element in spark core 
+it further divided into multiple partitions
+
+Ways To Create RDD : 
+1.from collection 
+
+from pyspark.sql import SparkSession
+spark=SparkSession.builder.appName("Sample").getOrCreate()
+#define collection
+ls=[1,5,10,11,24,37]
+
+#read data in spark created RDD
+rdd=spark.sparkContext.parallelize(ls)
+
+#check number of partitions in that RDD
+rdd.getNumPartitions()
+
+#operation on RDD - Square
+rdd1=rdd.map(lambda x:x*x)
+
+#result
+print(rdd1.collect())
+
+#output
+[1,25,100,121,576,1369]
+
+2.from External Source
+
+input :
+data.txt
+java
+scala
+r
+python
+cpp
+
+from pysaprk.sql import SparkSession
+spark=SparkSession.builder.appName("Sample").getOrCreate()
+
+rdd=spark.sparkContext.textFile("D:/data.txt")
+print(rdd.collect())
+rdd.getNumPartitions()
+
+rdd1=rdd.map(lambda x:x+" programming lang.")
+rdd1.collect()
+
+
+
+expected output : 
+java programming lang.
+scala programming lang.
+r programming lang.
+python programming lang.
+cpp programming lang.
+
+3.from Existing RDD 
+
+from pysaprk.sql import SparkSession
+spark=SparkSession.builder.appName("Sample").getOrCreate()
+
+rdd=spark.sparkContext.textFile("D:/data.txt")
+
+rdd1=rdd.map(lambda x:x+" programming lang.")
+rdd1.collect()
+
+==========================================
+3 ways to create RDD - 
+1.from collection 
+2.from external source
+3.from existing RDD 
+
+input.txt
+I am Rahul and I am from Pune
+I am Karan I am from Mumbai and my age is 25
+I am Meeta I am from Pune I like travel
+I am Sujit I am from Surat I like cricket
+
+from pyspark.sql import SparkSession
+spark=SparkSession.builder.appName("Sample").getOrCreate()
+
+rdd=spark.sparkContext.textFile("D:/input.txt")
+
+rdd1=rdd.filter(lambda x:("Pune" in x))
+
+print(rdd1.collect())
+
+rdd1.saveAsTextFile("D:/spop")
+
+expected output :
+I am Rahul and I am from Pune
+I am Meeta I am from Pune I like travel
+
+=======================================
+#Operations on RDD : 
+
+1.Transformation
+operation on RDD result we are getting an other RDD.
+exm- map,filter
+
+2.Action
+Operation on RDD we are getting collection or value as a result 
+collect,saveAsTextFile
+
+=========================
+#Lazy Evaluation*****: 
+untill we are not calling action , transaformation will not execute.
+
+rdd=spark.sparkContext.textFile("D:/input_new.txt")
+
+rdd1=rdd.filter(lambda x:("Pune" in x))
+
+print(rdd1.collect())
+
+Note - it will check not exist file when we call action , here collect()
+
+====================================
+#Transformation : 
+1.wide Transformation
+2.Narrow Transformation
+
+Word Count Exm : 
+
+sample.txt
+this is java
+this is scala
+this is python
+python is easy
+
+
+from pyspark.sql import SparkSession
+spark=SparkSession.builder.appName("Sample").getOrCreate()
+
+rdd=spark.sparkContext.textFile("D:/sample.txt")
+
+rdd1=rdd.flatMap(lambda x:x.split(" "))  #Narrow
+
+rdd2=rdd1.map(lambda x:(x,1)) #narrow
+
+rdd3=rdd2.reduceByKey(lambda x,y:x+y)  #wide
+
+rdd3.saveAsTextFile("D:/wcop")
+print(rdd3.collect())
+rdd.count()
+rdd.take(2)
+
+expected resullt : 
+this 2
+is 4
+java 1
+scala 1
+python 2
+easy 1
+
+------------------------------------------------------------
+internet.logs
+username-site_ip/city-usage
+karan123-www.facebook.com_192.168.10.10/Pune-1.2GB  
+rohit456-www.youtube.com_192.168.11.20/Mumbai-2.5GB  
+sneha789-www.instagram.com_192.168.12.30/Delhi-1.8GB  
+amit321-www.facebook.com_192.168.13.40/Bangalore-0.9GB  
+pooja555-www.linkedin.com_192.168.14.50/Hyderabad-1.1GB  
+vishal222-www.netflix.com_192.168.15.60/Chennai-3.4GB  
+rahul999-www.amazon.com_192.168.16.70/Kolkata-2.2GB  
+megha101-www.youtube.com_192.168.17.80/Pune-1.5GB  
+deepak007-www.whatsapp.com_192.168.18.90/Mumbai-0.8GB  
+swati202-www.quora.com_192.168.19.100/Delhi-1.7GB  
+nitesh333-www.flipkart.com_192.168.20.110/Bangalore-2.0GB  
+riya888-www.netflix.com_192.168.21.120/Hyderabad-3.1GB  
+sanjay654-www.snapchat.com_192.168.22.130/Chennai-0.6GB  
+priya777-www.google.com_192.168.23.140/Kolkata-1.9GB  
+akash555-www.instagram.com_192.168.24.150/Pune-2.3GB  
+manoj909-www.microsoft.com_192.168.25.160/Mumbai-1.0GB  
+tanya303-www.zomato.com_192.168.26.170/Delhi-0.7GB  
+dinesh606-www.swiggy.com_192.168.27.180/Bangalore-2.8GB  
+radhika808-www.paytm.com_192.168.28.190/Hyderabad-1.4GB  
+omkar121-www.uber.com_192.168.29.200/Chennai-1.2GB  
+anita404-www.olx.in_192.168.30.210/Kolkata-0.5GB  
+sachin777-www.myntra.com_192.168.31.220/Pune-2.9GB  
+neha909-www.hotstar.com_192.168.32.230/Mumbai-3.0GB  
+alok654-www.airbnb.com_192.168.33.240/Delhi-1.6GB  
+varsha555-www.jiosaavn.com_192.168.34.250/Bangalore-0.9GB  
+
+
+
+
+from pyspark.sql import SparkSession
+spark=SparkSession.builder.appName("Sample").getOrCreate()
+
+rdd=spark.sparkContext.textFile("D:/internet.logs")
+
+rdd1=rdd.map(lambda x:x.replace("-",",")).map(lambda x:x.replace("_",",")).map(lambda x:x.replace("/",","))
+
+rdd1.collect()
+
+rdd1.saveAsTextFile("D:/cleaned_internet_data")
+
+rdd2=rdd1.map(lambda x:x.split(",")).map(lambda x:x[3])
+
+rdd3=rdd2.map(lambda x:(x,1))
+
+rdd4=rdd3.reduceByKey(lambda x,y:x+y)
+
+rdd4.collect()
+
+==========================================================
+#Repartition and Coalesce : 

@@ -1,0 +1,834 @@
+#Spark - SQL 
+------------------------------
+
+Spark Core - Unstructured
+
+Spark SQL - Stuctured, Semi- Structured 
+
+Spark Ecosystem 
+
+Catalyst Optimizer : 
+
+DF : Dataframe 
+it is logical table ib sqpark
+on DF we can run sql like operation
+========================================
+emp1.csv
+
+eid|ename|did|sal|city
+1|Karan|10|25000|Pune
+2|Rahul|20|30000|
+3|Sneha|10||Pune
+4|Amit|30|35000|Mumbai
+5|Neha|20|30000|
+6|Rajesh|10||Pune
+7|Pooja|30|40000|Delhi
+8|Sameer||35000|Mumbai
+9|Ankita|10|30000|Hyderabad
+10|Vikram|30|40000|
+
+
+=================================
+#CSV Data Processing
+
+#Read
+df=spark.read.format("CSV").option("header","true").option("delimiter","|").option("inferschema","true").load("D:/emp1.csv")
+
+#Process
+#1.Pure SQL
+df.createOrReplaceTempView("emp")
+
+df1=spark.sql("""select * from emp where city='Pune'""")
+
+df1.show()
++---+------+---+-----+----+
+|eid| ename|did|  sal|city|
++---+------+---+-----+----+
+|  1| Karan| 10|25000|Pune|
+|  3| Sneha| 10| null|Pune|
+|  6|Rajesh| 10| null|Pune|
++---+------+---+-----+----+ 	
+
+df1.createOrReplaceTempView("emp1")
+
+df2=spark.sql("""select * from emp1 where sal is null""")
+
+df2.show()
++---+------+---+----+----+
+|eid| ename|did| sal|city|
++---+------+---+----+----+
+|  3| Sneha| 10|null|Pune|
+|  6|Rajesh| 10|null|Pune|
++---+------+---+----+----+
+
+#2.DF API Functions
+
+
+#Write
+>>> df.show()
++---+------+----+-----+---------+
+|eid| ename| did|  sal|     city|
++---+------+----+-----+---------+
+|  1| Karan|  10|25000|     Pune|
+|  2| Rahul|  20|30000|     null|
+|  3| Sneha|  10| null|     Pune|
+|  4|  Amit|  30|35000|   Mumbai|
+|  5|  Neha|  20|30000|     null|
+|  6|Rajesh|  10| null|     Pune|
+|  7| Pooja|  30|40000|    Delhi|
+|  8|Sameer|null|35000|   Mumbai|
+|  9|Ankita|  10|30000|Hyderabad|
+| 10|Vikram|  30|40000|     null|
++---+------+----+-----+---------+
+
+>>> df.printSchema()
+root
+ |-- eid: integer (nullable = true)
+ |-- ename: string (nullable = true)
+ |-- did: integer (nullable = true)
+ |-- sal: integer (nullable = true)
+ |-- city: string (nullable = true)
+ 
+
+df2.write.format("CSV").option("delimiter",":").option("header","true").save("D:/empop")
+
+eid:ename:did:sal:city
+3:Sneha:10:"":Pune
+6:Rajesh:10:"":Pune
+
+
+>>> df.rdd.getNumPartitions()
+1
+>>> df_res=df.repartition(2)
+>>> df_res.rdd.getNumPartitions()
+2
+
+==============================================================
+#emp1.csv and dept1.csv --> join result 
+
+emp1.csv 
+eid|ename|did|sal|city
+1|Karan|10|25000|Pune
+2|Rahul|20|30000|
+3|Sneha|10||Pune
+4|Amit|30|35000|Mumbai
+5|Neha|20|30000|
+6|Rajesh|10||Pune
+7|Pooja|30|40000|Delhi
+8|Sameer||35000|Mumbai
+9|Ankita|10|30000|Hyderabad
+10|Vikram|30|40000|
+
+
+dept1.csv
+did,dname
+10,IT
+20,HR
+30,Finance
+40,Marketing
+50,Operations
+60,Sales
+70,Research & Development
+80,Customer Support
+90,Administration
+100,Legal
+
+from pyspark.sql import SparkSession
+spark=SparkSession.builder.appName("Testing").getOrCreate()
+
+#read
+df_emp=spark.read.format("CSV").option("header","true").option("delimiter","|").option("inferschema","true").load("D:/emp1.csv")
+
+df_dept=spark.read.format("CSV").option("header","true").option("delimiter",",").option("inferschema","true").load("D:/dept1.csv")
+
+df_emp.show()
+df_dept.show()
+
+#process
+#Pure SQL 
+df_emp.createOrReplaceTempView("emp")
+df_dept.createOrReplaceTempView("dept")
+
+df_res=spark.sql("""select eid,ename,dname,city
+from emp inner join dept
+on emp.did=dept.did""")
+
+df_res.show()
+
+print(df_res.rdd.getNumPartitions())
+
+df_res.write.format("CSV").option("header","true").option("delimiter","|").save("D:/emp_dept_op")
+
+
+#show()
+
+df.show()
+
+show top 20 rows from df
+df.show(n)
+n is top n number of lines
++---+--------------------+
+|did|               dname|
++---+--------------------+
+| 70|Research & Develo...|
+
+df.show(10,False)
++---+----------------------+
+|did|dname                 |
++---+----------------------+
+|70 |Research & Development|
+
+False : truncate False
+
+===============================================================
+#Process CSV data using DF API Functions
+
+#Read 
+df=spark.read.format("CSV").option("header","true").option("delimiter","|").option("inferschema","true").load("D:/emp1.csv")
+
+df.show()
++---+------+----+-----+---------+
+|eid| ename| did|  sal|     city|
++---+------+----+-----+---------+
+|  1| Karan|  10|25000|     Pune|
+|  2| Rahul|  20|30000|     null|
+|  3| Sneha|  10| null|     Pune|
+|  4|  Amit|  30|35000|   Mumbai|
+|  5|  Neha|  20|30000|     null|
+|  6|Rajesh|  10| null|     Pune|
+|  7| Pooja|  30|40000|    Delhi|
+|  8|Sameer|null|35000|   Mumbai|
+|  9|Ankita|  10|30000|Hyderabad|
+| 10|Vikram|  30|40000|     null|
++---+------+----+-----+---------+
+
+
+#Process :#2. DF API Functions
+df1=df.where("sal is null")
+df1.show()
+
+#write
+df1.write.option("header","true").option("delimiter","|").save("D:/spop1")
+
+==================================================================
+#DF API Functions
+df=spark.read.format("CSV").option("header","true").option("delimiter","|").option("inferschema","true").load("D:/emp1.csv")
+
+#select 
+
+df1=df.select("*")
+df1.show()
++---+------+----+-----+---------+
+|eid| ename| did|  sal|     city|
++---+------+----+-----+---------+
+|  1| Karan|  10|25000|     Pune|
+|  2| Rahul|  20|30000|     null|
+
+df1=df.select("eid","city")
+df1.show()
++---+---------+
+|eid|     city|
++---+---------+
+|  1|     Pune|
+|  2|     null|
+
+df1=df.select("city","ename","eid")
+df1.show()
++---------+------+---+
+|     city| ename|eid|
++---------+------+---+
+|     Pune| Karan|  1|
+|     null| Rahul|  2|
+|     Pune| Sneha|  3|
+
+df1=df.select("eid","eid","eid")
+df1.show()
++---+---+---+
+|eid|eid|eid|
++---+---+---+
+|  1|  1|  1|
+|  2|  2|  2|
+
+df1=df.select(df['ename'])
+df1.show()
++------+
+| ename|
++------+
+| Karan|
+| Rahul|
+
+df1=df.select(df.ename)
+df1.show()
+
++------+
+| ename|
++------+
+| Karan|
+| Rahul|
+
+from pyspark.sql.functions import *
+
+df1=df.select(col("ename"))
+df1.show()
+
++------+
+| ename|
++------+
+| Karan|
+| Rahul|
+
+===========================================================
+#alias()
+
+df1=df.select(df['eid'],df["ename"].alias("emp_name"))
+df1.show()
+
++---+--------+
+|eid|emp_name|
++---+--------+
+|  1|   Karan|
+|  2|   Rahul|
+
+df1=df.select("eid","ename",df['sal'].alias("msal"),(df['sal']*12).alias("asal"))
+>>> df1.show()
++---+------+-----+------+
+|eid| ename| msal|  asal|
++---+------+-----+------+
+|  1| Karan|25000|300000|
+|  2| Rahul|30000|360000|
+
+#lit() : To add leteral/fixed value file selecting values 
+#select eid,ename,sal,1000 as bonus from emp 
+
+#withColumn() : add new column
+
+from pyspark.sql.functions import *
+
+df1=df.withColumn("bonus",lit(1000))
+>>> df1.show()
++---+------+----+-----+---------+-----+
+|eid| ename| did|  sal|     city|bonus|
++---+------+----+-----+---------+-----+
+|  1| Karan|  10|25000|     Pune| 1000|
+|  2| Rahul|  20|30000|     null| 1000|
+
+df1=df.withColumn("Status",lit("Active"))
+>>> df1.show()
++---+------+----+-----+---------+------+
+|eid| ename| did|  sal|     city|Status|
++---+------+----+-----+---------+------+
+|  1| Karan|  10|25000|     Pune|Active|
+|  2| Rahul|  20|30000|     null|Active|
+
+df1=df.withColumn("an_sal",df['sal']*12)
+>>> df1.show()
++---+------+----+-----+---------+------+
+|eid| ename| did|  sal|     city|an_sal|
++---+------+----+-----+---------+------+
+|  1| Karan|  10|25000|     Pune|300000|
+|  2| Rahul|  20|30000|     null|360000|
+
+==================================================
+when...otherwise
+
+select eid,ename,sal,city,
+case
+when city='Pune' then 500
+when city='Mumbai' then 1000
+else 2000
+end as bonus from emp;
+
+df1=df.withColumn("bonus",when(df['city']=='Pune',lit(500)).when(df['city']=='Mumbai',lit(1000)).otherwise(lit(200)))
+
+df1.show()
+
++---+------+----+-----+---------+-----+
+|eid| ename| did|  sal|     city|bonus|
++---+------+----+-----+---------+-----+
+|  1| Karan|  10|25000|     Pune|  500|
+|  2| Rahul|  20|30000|     null|  200|
+|  3| Sneha|  10| null|     Pune|  500|
+|  4|  Amit|  30|35000|   Mumbai| 1000|
+
+=========================================================
+#where 
+
+df1=df.where(df['city']=="Pune")
+>>> df1.show()
++---+------+---+-----+----+
+|eid| ename|did|  sal|city|
++---+------+---+-----+----+
+|  1| Karan| 10|25000|Pune|
+|  3| Sneha| 10| null|Pune|
+|  6|Rajesh| 10| null|Pune|
++---+------+---+-----+----+
+
+df1=df.where((df['city']=="Pune") & (df['sal']>=20000))
+df1.show()
++---+-----+---+-----+----+
+|eid|ename|did|  sal|city|
++---+-----+---+-----+----+
+|  1|Karan| 10|25000|Pune|
++---+-----+---+-----+----+
+
+df1=df.where((df['city']=="Pune") | (df['sal']>=20000))
+df1.show()
++---+------+----+-----+---------+
+|eid| ename| did|  sal|     city|
++---+------+----+-----+---------+
+|  1| Karan|  10|25000|     Pune|
+|  2| Rahul|  20|30000|     null|
+|  3| Sneha|  10| null|     Pune|
+|  4|  Amit|  30|35000|   Mumbai|
+
+df1=df.where(df['sal'].isNull())
+df1.show()
++---+------+---+----+----+
+|eid| ename|did| sal|city|
++---+------+---+----+----+
+|  3| Sneha| 10|null|Pune|
+|  6|Rajesh| 10|null|Pune|
++---+------+---+----+----+
+
+
+df1=df.where(df['sal'].isNotNull())
+df1.show()
++---+------+----+-----+---------+
+|eid| ename| did|  sal|     city|
++---+------+----+-----+---------+
+|  1| Karan|  10|25000|     Pune|
+|  2| Rahul|  20|30000|     null|
+
+===========================================
+isin()
+isnotin()
+
+df1=df.where(df['city'].isin('Pune','Mumbai'))
+df1.show()
++---+------+----+-----+------+
+|eid| ename| did|  sal|  city|
++---+------+----+-----+------+
+|  1| Karan|  10|25000|  Pune|
+|  3| Sneha|  10| null|  Pune|
+|  4|  Amit|  30|35000|Mumbai|
+
+df1=df.filter(df['city'].isin('Pune','Mumbai'))
+df1.show()
++---+------+----+-----+------+
+|eid| ename| did|  sal|  city|
++---+------+----+-----+------+
+|  1| Karan|  10|25000|  Pune|
+|  3| Sneha|  10| null|  Pune|
+|  4|  Amit|  30|35000|Mumbai|
+
+>>> df1=df.filter(~(df['city'].isin('Pune','Mumbai')))
+>>> df1.show()
++---+------+---+-----+---------+
+|eid| ename|did|  sal|     city|
++---+------+---+-----+---------+
+|  7| Pooja| 30|40000|    Delhi|
+|  9|Ankita| 10|30000|Hyderabad|
++---+------+---+-----+---------+
+
+==================================================
+#Like()
+
+df1=df.filter(df['city'].like("%P%"))
+df1.show()
++---+------+---+-----+----+
+|eid| ename|did|  sal|city|
++---+------+---+-----+----+
+|  1| Karan| 10|25000|Pune|
+|  3| Sneha| 10| null|Pune|
+|  6|Rajesh| 10| null|Pune|
++---+------+---+-----+----+
+
+df1=df.filter(df['city'].like("%m%"))
+df1.show()
++---+------+----+-----+------+
+|eid| ename| did|  sal|  city|
++---+------+----+-----+------+
+|  4|  Amit|  30|35000|Mumbai|
+|  8|Sameer|null|35000|Mumbai|
++---+------+----+-----+------+
+
+df1=df.filter(df['city'].like("%d"))
+df1.show()
++---+------+---+-----+---------+
+|eid| ename|did|  sal|     city|
++---+------+---+-----+---------+
+|  9|Ankita| 10|30000|Hyderabad|
++---+------+---+-----+---------+
+
+======================================
+#Renamed Column Name
+
+df1=df.withColumnRenamed("sal","salary")
+df1.show()
+
++---+------+----+------+---------+
+|eid| ename| did|salary|     city|
++---+------+----+------+---------+
+|  1| Karan|  10| 25000|     Pune|
+|  2| Rahul|  20| 30000|     null|
+
+#drop
+df1=df.drop("city","sal")
+df1.show()
++---+------+----+
+|eid| ename| did|
++---+------+----+
+|  1| Karan|  10|
+|  2| Rahul|  20|
+
+#Handling Null Values
++---+------+----+-----+---------+
+|eid| ename| did|  sal|     city|
++---+------+----+-----+---------+
+|  1| Karan|  10|25000|     Pune|
+|  2| Rahul|  20|30000|     null|
+|  3| Sneha|  10| null|     Pune|
+|  4|  Amit|  30|35000|   Mumbai|
+|  5|  Neha|  20|30000|     null|
+|  6|Rajesh|  10| null|     Pune|
+|  7| Pooja|  30|40000|    Delhi|
+|  8|Sameer|null|35000|   Mumbai|
+|  9|Ankita|  10|30000|Hyderabad|
+| 10|Vikram|  30|40000|     null|
++---+------+----+-----+---------+
+
+#fill.na 
+df1=df.fillna("NA")
+df1.show()
++---+------+----+-----+---------+
+|eid| ename| did|  sal|     city|
++---+------+----+-----+---------+
+|  1| Karan|  10|25000|     Pune|
+|  2| Rahul|  20|30000|       NA|
+
+df1=df.fillna(0)
+df1.show()
++---+------+---+-----+---------+
+|eid| ename|did|  sal|     city|
++---+------+---+-----+---------+
+|  1| Karan| 10|25000|     Pune|
+|  2| Rahul| 20|30000|     null|
+|  3| Sneha| 10|    0|     Pune|
+|  4|  Amit| 30|35000|   Mumbai|
+
+df1=df.fillna("NA").fillna(0)
+df1.show()
++---+------+---+-----+---------+
+|eid| ename|did|  sal|     city|
++---+------+---+-----+---------+
+|  1| Karan| 10|25000|     Pune|
+|  2| Rahul| 20|30000|       NA|
+|  3| Sneha| 10|    0|     Pune|
+
+#dropna
+df1=df.dropna()
+df1.show()
++---+------+---+-----+---------+
+|eid| ename|did|  sal|     city|
++---+------+---+-----+---------+
+|  1| Karan| 10|25000|     Pune|
+|  4|  Amit| 30|35000|   Mumbai|
+|  7| Pooja| 30|40000|    Delhi|
+|  9|Ankita| 10|30000|Hyderabad|
++---+------+---+-----+---------+
+
+================================================
+#Join
+df_emp=spark.read.format("CSV").option("header","true").option("delimiter","|").option("inferschema","true").load("D:/emp1.csv")
+
+df_dept=spark.read.format("CSV").option("header","true").option("delimiter",",").option("inferschema","true").load("D:/dept1.csv")
+
+>>> df_emp.show()
++---+------+----+-----+---------+
+|eid| ename| did|  sal|     city|
++---+------+----+-----+---------+
+|  1| Karan|  10|25000|     Pune|
+|  2| Rahul|  20|30000|     null|
+|  3| Sneha|  10| null|     Pune|
+|  4|  Amit|  30|35000|   Mumbai|
+|  5|  Neha|  20|30000|     null|
+|  6|Rajesh|  10| null|     Pune|
+|  7| Pooja|  30|40000|    Delhi|
+|  8|Sameer|null|35000|   Mumbai|
+|  9|Ankita|  10|30000|Hyderabad|
+| 10|Vikram|  30|40000|     null|
++---+------+----+-----+---------+
+
+>>> df_dept.show()
++---+--------------------+
+|did|               dname|
++---+--------------------+
+| 10|                  IT|
+| 20|                  HR|
+| 30|             Finance|
+| 40|           Marketing|
+| 50|          Operations|
+| 60|               Sales|
+| 70|Research & Develo...|
+| 80|    Customer Support|
+| 90|      Administration|
+|100|               Legal|
++---+--------------------+
+
+df_res=df_emp.join(df_dept,"did","inner")
+>>> df_res.show()
++---+---+------+-----+---------+-------+
+|did|eid| ename|  sal|     city|  dname|
++---+---+------+-----+---------+-------+
+| 10|  1| Karan|25000|     Pune|     IT|
+| 20|  2| Rahul|30000|     null|     HR|
+
+
+df_res=df_emp.join(df_dept,"did","inner").select("eid","ename","dname",df_emp['did'])
++---+------+-------+---+
+|eid| ename|  dname|did|
++---+------+-------+---+
+|  9|Ankita|     IT| 10|
+|  6|Rajesh|     IT| 10|
+|  3| Sneha|     IT| 10|
+
+df_res=df_emp.join(df_dept,df_emp["did"]==df_dept["did"],"inner")
++---+------+---+-----+---------+---+-------+
+|eid| ename|did|  sal|     city|did|  dname|
++---+------+---+-----+---------+---+-------+
+|  1| Karan| 10|25000|     Pune| 10|     IT|
+|  2| Rahul| 20|30000|     null| 20|     HR|
+|  3| Sneha| 10| null|     Pune| 10|     IT|
+
+df_res=df_emp.join(df_dept,"did","left")
+df_res.show()
++----+---+------+-----+---------+-------+
+| did|eid| ename|  sal|     city|  dname|
++----+---+------+-----+---------+-------+
+|  10|  1| Karan|25000|     Pune|     IT|
+|null|  8|Sameer|35000|   Mumbai|   null|
+
+df_res=df_emp.join(df_dept,"did","right")
+df_res.show()
++---+----+------+-----+---------+--------------------+
+|did| eid| ename|  sal|     city|               dname|
++---+----+------+-----+---------+--------------------+
+| 10|   9|Ankita|30000|Hyderabad|                  IT|
+| 10|   6|Rajesh| null|     Pune|                  IT|
+| 40|null|  null| null|     null|           Marketing|
+| 50|null|  null| null|     null|          Operations|
+| 60|null|  null| null|     null|               Sales|
+
+df_res=df_emp.join(df_dept,"did","full")
+df_res.show()
++----+----+------+-----+---------+--------------------+
+| did| eid| ename|  sal|     city|               dname|
++----+----+------+-----+---------+--------------------+
+|null|   8|Sameer|35000|   Mumbai|                null|
+|  20|   2| Rahul|30000|     null|                  HR|
+|  20|   5|  Neha|30000|     null|                  HR|
+|  40|null|  null| null|     null|           Marketing|
+| 100|null|  null| null|     null|               Legal|
+
+df_res=df_emp.crossJoin(df_dept)
+df_res.show()
+
++---+------+----+-----+---------+---+--------------------+
+|eid| ename| did|  sal|     city|did|               dname|
++---+------+----+-----+---------+---+--------------------+
+|  1| Karan|  10|25000|     Pune| 10|                  IT|
+|  1| Karan|  10|25000|     Pune| 20|                  HR|
+|  1| Karan|  10|25000|     Pune| 30|             Finance|
+|  1| Karan|  10|25000|     Pune| 40|           Marketing|
+|  1| Karan|  10|25000|     Pune| 50|          Operations|
+|  1| Karan|  10|25000|     Pune| 60|               Sales|
+|  1| Karan|  10|25000|     Pune| 70|Research & Develo...|
+|  1| Karan|  10|25000|     Pune| 80|    Customer Support|
+|  1| Karan|  10|25000|     Pune| 90|      Administration|
+|  1| Karan|  10|25000|     Pune|100|               Legal|
+|  2| Rahul|  20|30000|     null| 10|                  IT|
+|  2| Rahul|  20|30000|     null| 20|                  HR
+
+
+#SQL Left Anti : select * from emp left join dept on emp.did=dept.did where dept.did is null;
+
+df_res=df_emp.join(df_dept,"did","left").where(df_dept['did'].isNull())
+
+df_res.show()
++----+---+------+-----+------+
+| did|eid| ename|  sal|  city|
++----+---+------+-----+------+
+|null|  8|Sameer|35000|Mumbai|
++----+---+------+-----+------+
+
+df_res=df_emp.join(df_dept,"did","left_anti")
+df_res.show()
++----+---+------+-----+------+
+| did|eid| ename|  sal|  city|
++----+---+------+-----+------+
+|null|  8|Sameer|35000|Mumbai|
++----+---+------+-----+------+
+
+============================================================
+#windowing Functions 
+row_number()
+rank()
+dense_rank()
+lead()
+lag()
+
+from pyspark.sql.functions import *
+from pyspark.sql.window import Window
+
+
+win_sp=Window.partitionBy("did").orderBy("sal")
+df1=df.withColumn("rn",row_number().over(win_sp))
+df1.show()
+
++---+------+----+-----+---------+---+
+|eid| ename| did|  sal|     city| rn|
++---+------+----+-----+---------+---+
+|  8|Sameer|null|35000|   Mumbai|  1|
+|  2| Rahul|  20|30000|     null|  1|
+|  5|  Neha|  20|30000|     null|  2|
+|  3| Sneha|  10| null|     Pune|  1|
+|  6|Rajesh|  10| null|     Pune|  2|
+|  1| Karan|  10|25000|     Pune|  3|
+|  9|Ankita|  10|30000|Hyderabad|  4|
+
+win_sp=Window.partitionBy(lit(1)).orderBy("sal")
+df1=df.withColumn("rn",row_number().over(win_sp))
+df1.show()
+
++---+------+----+-----+---------+---+
+|eid| ename| did|  sal|     city| rn|
++---+------+----+-----+---------+---+
+|  3| Sneha|  10| null|     Pune|  1|
+|  6|Rajesh|  10| null|     Pune|  2|
+|  1| Karan|  10|25000|     Pune|  3|
+|  2| Rahul|  20|30000|     null|  4|
+|  5|  Neha|  20|30000|     null|  5|
+|  9|Ankita|  10|30000|Hyderabad|  6|
+|  4|  Amit|  30|35000|   Mumbai|  7|
+|  8|Sameer|null|35000|   Mumbai|  8|
+|  7| Pooja|  30|40000|    Delhi|  9|
+| 10|Vikram|  30|40000|     null| 10|
++---+------+----+-----+---------+---+
+
+win_sp=Window.partitionBy(lit(1)).orderBy(desc("sal"))
+df1=df.withColumn("rn",row_number().over(win_sp))
+df1.show()
++---+------+----+-----+---------+---+
+|eid| ename| did|  sal|     city| rn|
++---+------+----+-----+---------+---+
+|  7| Pooja|  30|40000|    Delhi|  1|
+| 10|Vikram|  30|40000|     null|  2|
+|  4|  Amit|  30|35000|   Mumbai|  3|
+|  8|Sameer|null|35000|   Mumbai|  4|
+|  2| Rahul|  20|30000|     null|  5|
+|  5|  Neha|  20|30000|     null|  6|
+|  9|Ankita|  10|30000|Hyderabad|  7|
+|  1| Karan|  10|25000|     Pune|  8|
+|  3| Sneha|  10| null|     Pune|  9|
+|  6|Rajesh|  10| null|     Pune| 10|
++---+------+----+-----+---------+---+
+
+win_sp=Window.partitionBy(lit(1)).orderBy("sal")
+df1=df.withColumn("rn",rank().over(win_sp))
+df1.show()
++---+------+----+-----+---------+---+
+|eid| ename| did|  sal|     city| rn|
++---+------+----+-----+---------+---+
+|  3| Sneha|  10| null|     Pune|  1|
+|  6|Rajesh|  10| null|     Pune|  1|
+|  1| Karan|  10|25000|     Pune|  3|
+|  2| Rahul|  20|30000|     null|  4|
+|  5|  Neha|  20|30000|     null|  4|
+|  9|Ankita|  10|30000|Hyderabad|  4|
+|  4|  Amit|  30|35000|   Mumbai|  7|
+|  8|Sameer|null|35000|   Mumbai|  7|
+|  7| Pooja|  30|40000|    Delhi|  9|
+| 10|Vikram|  30|40000|     null|  9|
++---+------+----+-----+---------+---+
+
+win_sp=Window.partitionBy(lit(1)).orderBy("sal")
+df1=df.withColumn("rn",dense_rank().over(win_sp))
+df1.show()
++---+------+----+-----+---------+---+
+|eid| ename| did|  sal|     city| rn|
++---+------+----+-----+---------+---+
+|  3| Sneha|  10| null|     Pune|  1|
+|  6|Rajesh|  10| null|     Pune|  1|
+|  1| Karan|  10|25000|     Pune|  2|
+|  2| Rahul|  20|30000|     null|  3|
+|  5|  Neha|  20|30000|     null|  3|
+|  9|Ankita|  10|30000|Hyderabad|  3|
+|  4|  Amit|  30|35000|   Mumbai|  4|
+|  8|Sameer|null|35000|   Mumbai|  4|
+|  7| Pooja|  30|40000|    Delhi|  5|
+| 10|Vikram|  30|40000|     null|  5|
++---+------+----+-----+---------+---+
+
+win_sp=Window.partitionBy(lit(1)).orderBy("sal")
+df1=df.withColumn("prev_sal",lag(df['sal'],1,0).over(win_sp))
+df1.show()
+
++---+------+----+-----+---------+--------+
+|eid| ename| did|  sal|     city|prev_sal|
++---+------+----+-----+---------+--------+
+|  3| Sneha|  10| null|     Pune|       0|
+|  6|Rajesh|  10| null|     Pune|    null|
+|  1| Karan|  10|25000|     Pune|    null|
+|  2| Rahul|  20|30000|     null|   25000|
+|  5|  Neha|  20|30000|     null|   30000|
+|  9|Ankita|  10|30000|Hyderabad|   30000|
+|  4|  Amit|  30|35000|   Mumbai|   30000|
+|  8|Sameer|null|35000|   Mumbai|   35000|
+|  7| Pooja|  30|40000|    Delhi|   35000|
+| 10|Vikram|  30|40000|     null|   40000|
++---+------+----+-----+---------+--------+
+
+win_sp=Window.partitionBy(lit(1)).orderBy("sal")
+df1=df.withColumn("next_sal",lead(df['sal'],2,0).over(win_sp))
+df1.show()
+
++---+------+----+-----+---------+--------+
+|eid| ename| did|  sal|     city|next_sal|
++---+------+----+-----+---------+--------+
+|  3| Sneha|  10| null|     Pune|   25000|
+|  6|Rajesh|  10| null|     Pune|   30000|
+|  1| Karan|  10|25000|     Pune|   30000|
+|  2| Rahul|  20|30000|     null|   30000|
+|  5|  Neha|  20|30000|     null|   35000|
+|  9|Ankita|  10|30000|Hyderabad|   35000|
+|  4|  Amit|  30|35000|   Mumbai|   40000|
+|  8|Sameer|null|35000|   Mumbai|   40000|
+|  7| Pooja|  30|40000|    Delhi|       0|
+| 10|Vikram|  30|40000|     null|       0|
++---+------+----+-----+---------+--------+
+
+=================================================
+#Set Operators
+#Date Functions
+#User defined functions (UDF) on columns
+
+.select
+alias
+where
+filter
+when..otherwise
+withColumnRenamed
+drop
+dropna
+fillna
+withColumn
+like
+join
+row_number etc
+isin 
+isNull
+isNotNull   & | 
+
+
+======================================
+
